@@ -48,7 +48,7 @@ struct retval {
 	int val;
 };
 
-// list based on VFS API convert_result_to_errno()
+// list based on VFS API convert_result_to_errno(), plus others as needed
 static const struct retval errno_retvals[] = {
 	{ "null",	0		},
 	{ "allow", 	PROJFS_ALLOW	},
@@ -60,9 +60,10 @@ static const struct retval errno_retvals[] = {
 	{ retval_entry(ENODEV)		},
 	{ retval_entry(ENOENT)		},
 	{ retval_entry(ENOMEM)		},
+	{ retval_entry(ENOSYS)		},
 	{ retval_entry(ENOTSUP)		},
 	{ retval_entry(EPERM)		},
-	{ retval_entry(ENOSYS)		},
+	{ retval_entry(EWOULDBLOCK)	},	// may be same as EAGAIN
 	{ NULL,		0		}
 };
 
