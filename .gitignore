@@ -28,6 +28,7 @@
 /t/test-mounts/
 /t/test-output/
 /t/get_strerror
+/t/run_fileop
 /t/wait_mount
 .deps/
 .libs/

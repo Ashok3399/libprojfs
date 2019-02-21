@@ -27,11 +27,13 @@ test_common = test_common.c \
 	      $(top_srcdir)/include/projfs_notify.h
 
 check_PROGRAMS = get_strerror \
+		 run_fileop \
 		 test_projfs_handlers \
 		 test_projfs_simple \
 		 wait_mount
 
 get_strerror_SOURCES = get_strerror.c $(test_common)
+run_fileop_SOURCES = run_fileop.c $(test_common)
 test_projfs_handlers_SOURCES = test_projfs_handlers.c $(test_common)
 test_projfs_simple_SOURCES = test_projfs_simple.c $(test_common)
 wait_mount_SOURCES = wait_mount.c $(test_common)

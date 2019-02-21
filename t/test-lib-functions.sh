@@ -824,3 +824,17 @@ projfs_run_twice () {
 	return $ret
 }
 
+RUN_LOG="run.log"
+RUN_ERR="run.err"
+
+# Run a given file operation, passing all arguments given, and logging
+# output into "$RUN_LOG" and errors into "$RUN_ERR".
+projfs_run_fileop () {
+	"$TEST_DIRECTORY/run_fileop" "$@" >>"$RUN_LOG" 2>>"$RUN_ERR"
+}
+
+# Run the get_strerror helper, passing all arguments given.
+projfs_get_strerror () {
+	"$TEST_DIRECTORY/get_strerror" "$@"
+}
+
