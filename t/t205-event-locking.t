@@ -35,13 +35,17 @@ sleep 1
 setfattr -n user.projection.empty -v 0x01 source
 
 test_expect_success 'test concurrent access does not trigger failure' '
-	projfs_run_twice ls target
+	projfs_run_twice projfs_run_fileop opendir target
 '
 
 projfs_stop || exit 1
 
 test_expect_success 'check no event error messages' '
 	test_must_be_empty test_projfs_handlers.err
+'
+
+test_expect_success 'check no command error messages' '
+	test_must_be_empty run.err
 '
 
 # TODO: Use '--timeout 2' and add '--lock-timeout 1', and pass the latter
@@ -54,7 +58,7 @@ sleep 1
 setfattr -n user.projection.empty -v 0x01 source
 
 test_expect_success 'test concurrent access does trigger timeout' '
-	test_must_fail projfs_run_twice ls target
+	test_must_fail projfs_run_twice projfs_run_fileop opendir target
 '
 
 projfs_stop || exit 1
@@ -63,13 +67,8 @@ test_expect_success 'check no event error messages' '
 	test_must_be_empty test_projfs_handlers.err
 '
 
-# TODO: Instead of expecting to see this in the output from 'ls', create a
-#	simple helper program to just run a given syscall like opendir()
-#	and report strerror(errno), and then use that instead of 'ls' above.
-err=$("$TEST_DIRECTORY"/get_strerror EAGAIN);
-
 test_expect_success 'check all command error messages' '
-	grep -q "$err" "$EXEC_ERR"
+	grep -q "$(projfs_get_strerror EWOULDBLOCK)" run.err
 '
 
 test_done
