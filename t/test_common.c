@@ -293,15 +293,16 @@ static int parse_projlist_path(const char *s, int ispath, char **path)
 {
 	char buf[MAX_PROJLIST_PATH_LEN + 1];
 	const char *e = s;
-	char c = *e;
 	char q = '\0';
+	char c;
 	size_t len = 0;
 
-	if (isquote(*s)) {
-		q = *s;
-		++s;
+	if (isquote(*e)) {
+		q = *e;
+		++e;
 	}
 
+	c = *e;
 	while (c != '\0') {
 		if (q != '\0') {
 			if (c == q) {
@@ -324,6 +325,7 @@ static int parse_projlist_path(const char *s, int ispath, char **path)
 					c = '\t';
 					break;
 
+				case ' ':
 				case '"':
 				case '\'':
 				case '\\':
@@ -390,7 +392,7 @@ static struct test_projlist_entry *parse_projlist_entry(const char *buf)
 			entry.mode = S_IFREG;
 			break;
 
-		case 's':
+		case 'l':
 			entry.mode = S_IFLNK;
 			break;
 
@@ -416,7 +418,7 @@ static struct test_projlist_entry *parse_projlist_entry(const char *buf)
 	}
 	s += len;
 
-	if (S_ISREG(entry.mode) || S_ISDIR(entry.mode)) {
+	if (S_ISDIR(entry.mode) || S_ISREG(entry.mode)) {
 		s = skip_blanks(s);
 		if (*s == '\0') {
 			warnx("missing entry mode in projection list: %s",
@@ -431,10 +433,10 @@ static struct test_projlist_entry *parse_projlist_entry(const char *buf)
 			mode = strtoul(s, &e, 0);
 			len = e - s;
 			if (errno == 0 && len >= 4 && len <= 5 &&
-			    (S_ISREG(entry.mode) ? isblank(*e)
-						 : (*e == '\0'))) {
+			    (isblank(*e) || *e == '\0')) {
 				entry.mode |= mode;
 			}
+			s = e;
 		}
 
 		if ((entry.mode & ~S_IFMT) == 0) {
@@ -453,14 +455,15 @@ static struct test_projlist_entry *parse_projlist_entry(const char *buf)
 		}
 
 		entry.size = -1;
-		if (isdigit(*s) && (*s != '0' || isblank(*(s + 1)))) {
+		if (isdigit(*s)) {
 			unsigned long long int size;
 			char *e;
 
 			errno = 0;
 			size = strtoull(s, &e, 0);
-			if (errno == 0 && isblank(*e))
+			if (errno == 0 && (isblank(*e) || *e == '\0'))
 				entry.size = size;
+			s = e;
 		}
 
 		if (entry.size < 0) {
@@ -470,7 +473,7 @@ static struct test_projlist_entry *parse_projlist_entry(const char *buf)
 		}
 	}
 
-	if (S_ISREG(entry.mode) || S_ISLNK(entry.mode)) {
+	if (S_ISLNK(entry.mode) || S_ISREG(entry.mode)) {
 		const char *field;
 
 		field = S_ISREG(entry.mode) ? "source path" : "target path";
@@ -482,7 +485,7 @@ static struct test_projlist_entry *parse_projlist_entry(const char *buf)
 			goto out_name;
 		}
 
-		len = parse_projlist_path(s, 0, &entry.name);
+		len = parse_projlist_path(s, 1, &entry.lnk_or_src);
 		if (len < 0) {
 			warn_projlist_path(-len, field, buf);
 			goto out_name;
@@ -493,20 +496,21 @@ static struct test_projlist_entry *parse_projlist_entry(const char *buf)
 	s = skip_blanks(s);
 	if (*s != '\0') {
 		warnx("invalid extra fields in projection list: %s", buf);
-		goto out_src_link;
+		goto out_link;
 	}
 
 	ret = malloc(sizeof(entry));
 	if (ret == NULL) {
 		warn("unable to allocate projection list entry");
-		goto out_src_link;
+		goto out_link;
 	}
 	memcpy(ret, &entry, sizeof(entry));
+
 	return ret;
 
-out_src_link:
-	if (entry.src_or_link != NULL)
-		free(entry.src_or_link);
+out_link:
+	if (entry.lnk_or_src != NULL)
+		free(entry.lnk_or_src);
 out_name:
 	free(entry.name);
 	return NULL;
@@ -879,8 +883,8 @@ void test_free_opts(void)
 		next_entry = entry->next;
 
 		free(entry->name);
-		if (entry->src_or_link != NULL)
-			free(entry->src_or_link);
+		if (entry->lnk_or_src != NULL)
+			free(entry->lnk_or_src);
 		free(entry);
 
 		entry = next_entry;
