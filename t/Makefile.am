@@ -48,7 +48,8 @@ test_vfsapi_handlers_SOURCES = test_vfsapi_handlers.c $(test_vfsapi_common)
 test_vfsapi_simple_SOURCES = test_vfsapi_simple.c $(test_vfsapi_common)
 endif ENABLE_VFSAPI
 
-TESTS = t000-mirror-read.t \
+TESTS = c000-check-projlist.t \
+	t000-mirror-read.t \
 	t001-mirror-mkdir.t \
 	t002-mirror-write.t \
 	t003-mirror-remove.t \
